@@ -3,7 +3,19 @@ name: mock smtp manual trigger build
 on: workflow_dispatch
 
 jobs:
+  build-maven-mock-smtp:
+    uses: iiitb-pilot/kattu/.github/workflows/maven-build.yml@master
+    with:
+      SERVICE_LOCATION: ./
+      BUILD_ARTIFACT: mock-smtp
+    secrets:
+      OSSRH_USER: ${{ secrets.OSSRH_USER }}
+      OSSRH_SECRET: ${{ secrets.OSSRH_SECRET }}
+      OSSRH_TOKEN: ${{ secrets.OSSRH_TOKEN }}
+      GPG_SECRET: ${{ secrets.GPG_SECRET }}
+	  
   build-dockers:
+    needs: build-maven-mock-smtp
     strategy:
       matrix:
         include:

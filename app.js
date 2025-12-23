@@ -117,6 +117,27 @@ const wss = new WebSocket.Server({ port: WS_SERVER_PORT });
 
 console.log(`\x1b[33m Socket Server Running on ws://${SERVER_HOST}:${WS_SERVER_PORT}\x1b[0m`);
 
+function heartbeat() {
+  this.isAlive = true;
+}
+
+wss.on("connection", (ws) => {
+  ws.isAlive = true;
+  console.log(" New WebSocket client connected");
+  ws.on("pong", heartbeat);
+});
+
+setInterval(() => {
+  wss.clients.forEach((ws) => {
+    if (ws.isAlive === false) {
+      console.log(" WebSocket client disconnected due to timeout");
+      return ws.terminate();
+    }
+    ws.isAlive = false;
+    ws.ping();
+  });
+}, 30000);
+
 function broadcast(message) {
   const data = JSON.stringify(message);
   wss.clients.forEach(c => {

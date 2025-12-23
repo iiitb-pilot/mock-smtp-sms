@@ -1,0 +1,38 @@
+name: mock smtp manual trigger build
+
+on: workflow_dispatch
+
+jobs:
+  build-maven-mock-smtp:
+    uses: iiitb-pilot/kattu/.github/workflows/maven-build.yml@master
+    with:
+      SERVICE_LOCATION: ./
+      BUILD_ARTIFACT: mock-smtp
+    secrets:
+      OSSRH_USER: ${{ secrets.OSSRH_USER }}
+      OSSRH_SECRET: ${{ secrets.OSSRH_SECRET }}
+      OSSRH_TOKEN: ${{ secrets.OSSRH_TOKEN }}
+      GPG_SECRET: ${{ secrets.GPG_SECRET }}
+      SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK }}
+
+  build-dockers:
+    needs: build-maven-mock-smtp
+    strategy:
+      matrix:
+        include:
+          - SERVICE_LOCATION: './'
+            SERVICE_NAME: 'mock-smtp'
+            BUILD_ARTIFACT: 'mock-smtp'
+      fail-fast: false
+    name: ${{ matrix.SERVICE_NAME }}
+    uses: iiitb-pilot/kattu/.github/workflows/docker-build.yml@master
+    with:
+      SERVICE_LOCATION: ${{ matrix.SERVICE_LOCATION }}
+      SERVICE_NAME: ${{ matrix.SERVICE_NAME }}
+      BUILD_ARTIFACT: ${{ matrix.BUILD_ARTIFACT }}
+    secrets:
+      DEV_NAMESPACE_DOCKER_HUB: ${{ secrets.DEV_NAMESPACE_DOCKER_HUB }}
+      ACTOR_DOCKER_HUB: ${{ secrets.ACTOR_DOCKER_HUB }}
+      RELEASE_DOCKER_HUB: ${{ secrets.RELEASE_DOCKER_HUB }}
+      SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK }}
+

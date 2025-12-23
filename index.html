@@ -68,20 +68,43 @@
       const [status, setStatus] = React.useState(false);
 
       React.useEffect(() => {
-        fetch("/config")
-          .then(res => res.json())
-          .then(cfg => {
-            const wsUrl = `${cfg.wsProtocol}://${window.location.hostname}:${cfg.wsPort}${cfg.basePath}`;
-            const ws = new WebSocket(wsUrl);
+        let ws;
 
-            ws.onopen = () => setStatus(true);
-            ws.onclose = () => setStatus(false);
+        function connect() {
+          fetch("/config")
+            .then(res => res.json())
+            .then(cfg => {
+              const wsUrl = `${cfg.wsProtocol}://${window.location.hostname}:${cfg.wsPort}${cfg.basePath}`;
+              ws = new WebSocket(wsUrl);
 
-            ws.onmessage = e => {
-              const msg = JSON.parse(e.data);
-              setMails(prev => [msg, ...prev]);
-            };
-          });
+              ws.onopen = () => {
+                console.log("WebSocket connected");
+                setStatus(true);
+              };
+
+              ws.onclose = () => {
+                console.log(" WebSocket disconnected, retrying...");
+                setStatus(false);
+                setTimeout(connect, 3000);
+              };
+
+              ws.onerror = (err) => {
+                console.error(" WebSocket error", err);
+                ws.close();
+              };
+
+              ws.onmessage = e => {
+                const msg = JSON.parse(e.data);
+                setMails(prev => [msg, ...prev]);
+              };
+            });
+        }
+
+        connect();
+
+        return () => {
+          if (ws) ws.close();
+        };
       }, []);
 
       return (

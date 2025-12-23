@@ -4,7 +4,6 @@ on: workflow_dispatch
 
 jobs:
   build-dockers:
-    needs: build-maven-mock-smtp
     strategy:
       matrix:
         include:
